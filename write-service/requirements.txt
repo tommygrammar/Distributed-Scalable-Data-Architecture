@@ -1,0 +1,9 @@
+flask-cors
+flask
+requests
+pika
+
+
+
+
+
