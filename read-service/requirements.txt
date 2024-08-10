@@ -1,0 +1,16 @@
+flask-cors
+flask
+redis
+pika
+requests
+
+
+
+
+
+
+
+
+
+
+
