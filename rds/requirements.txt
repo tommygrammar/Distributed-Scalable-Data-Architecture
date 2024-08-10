@@ -1,0 +1,5 @@
+redis
+pika
+python-socketio
+requests
+websocket-client
