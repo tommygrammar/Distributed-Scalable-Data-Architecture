@@ -25,4 +25,4 @@ message service uses rabbit and its for updating the frontend ui
 i should also rollout the docker instructions, with orchestration done with docker-compose or kubernetes
 
 
-But yes, understand how verythinng works and you are going to find it easy. T=I should be rolling out new updates really soon in another branch. The goal is a high frequency data system with extremely high performance.
+But yes, understand how everything works and you are going to find it easy. T=I should be rolling out new updates really soon in another branch. The goal is a high frequency data system with extremely high performance.
