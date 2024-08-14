@@ -44,6 +44,12 @@ gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architect
 # Wait for read-service.py to fully complete
 wait
 
+
+#wait for message-service.py
+gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/message-service && python3 message-service.py && echo 'message-service.py has completed'; exec bash"
+
+wait
+
 # Open new GNOME terminal tab and run write-service.py
 gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/write-service && python3 write-service.py && echo 'write-service.py has completed'; exec bash"
 
