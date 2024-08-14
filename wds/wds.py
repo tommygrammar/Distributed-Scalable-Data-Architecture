@@ -2,11 +2,16 @@ import redis
 import json
 import pika
 import socketio
-
+import threading
+import time
 
 class WriteDistributionService:
-    def __init__(self, mds_host='localhost', mds_port=5006):
+    def __init__(self, mds_host='localhost', mds_port=5006, refresh_interval=60):
         self.sio = socketio.Client()
+        self.mds_host = mds_host
+        self.mds_port = mds_port
+        self.refresh_interval = refresh_interval
+
         self.redis_addresses = self.get_redis_addresses(mds_host, mds_port)
         self.redis_client1 = redis.Redis(host=self.redis_addresses['main']['host'], port=self.redis_addresses['main']['port'], db=0)
         self.redis_client2 = redis.Redis(host=self.redis_addresses['backup']['host'], port=self.redis_addresses['backup']['port'], db=0)
@@ -14,6 +19,10 @@ class WriteDistributionService:
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='write_queue', durable=True)
+
+        # Start a background thread to periodically refresh the Redis addresses
+        self.refresh_thread = threading.Thread(target=self.periodic_redis_refresh, daemon=True)
+        self.refresh_thread.start()
 
     def get_redis_addresses(self, mds_host, mds_port):
         self.sio.connect(f"http://{mds_host}:{mds_port}")
@@ -27,8 +36,11 @@ class WriteDistributionService:
                 else:
                     addresses['backup'] = data
 
+        # Request main Redis address
         self.sio.emit('request_redis_address', {'type': 'main'})
         self.sio.sleep(1)  # Adjust the sleep time as necessary
+        
+        # Request backup Redis address
         self.sio.emit('request_redis_address', {'type': 'backup'})
         self.sio.sleep(1)  # Adjust the sleep time as necessary
         
@@ -38,6 +50,20 @@ class WriteDistributionService:
             raise Exception("Failed to retrieve Redis addresses from MDS")
 
         return addresses
+
+    def refresh_redis_clients(self):
+        # Get the latest Redis addresses
+        new_redis_addresses = self.get_redis_addresses(self.mds_host, self.mds_port)
+        if new_redis_addresses != self.redis_addresses:
+            print(f"Updating Redis addresses from {self.redis_addresses} to {new_redis_addresses}")
+            self.redis_addresses = new_redis_addresses
+            self.redis_client1 = redis.Redis(host=self.redis_addresses['main']['host'], port=self.redis_addresses['main']['port'], db=0)
+            self.redis_client2 = redis.Redis(host=self.redis_addresses['backup']['host'], port=self.redis_addresses['backup']['port'], db=0)
+
+    def periodic_redis_refresh(self):
+        while True:
+            self.refresh_redis_clients()
+            time.sleep(self.refresh_interval)
 
     def write_data(self, collection, document, fields):
         try:
