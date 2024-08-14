@@ -23,4 +23,6 @@ What we have:
 
 But yes, understand how everything works and you are going to find it easy. I should be rolling out new updates really soon in another branch. The goal is a high frequency data architecture with extremely high performance.
 
-I should also rollout the docker instructions, with orchestration done with docker-compose or kubernetes
+will rolout the docker compose or kubernetes soon.
+
+the terminal.sh is a bash automated script for running all of tgem in different terminals using one script.
