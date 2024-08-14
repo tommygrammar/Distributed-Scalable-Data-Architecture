@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Open new GNOME terminal tab and run mds.py
-gnome-terminal --tab -- bash -c "cd /home/tommy/Downloads/Distributed-Scalable-Data-Architecture/mds && python3 mds.py && echo 'mds.py has completed'; exec bash"
+gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/mds && python3 mds.py && echo 'mds.py has completed'; exec bash"
 
 # Wait for 5 seconds to give mds.py time to start
 sleep 5
@@ -26,10 +26,10 @@ done
 
 if [ "$mds_ready" = true ]; then
     # Open new GNOME terminal tab and run rds.py
-    gnome-terminal --tab -- bash -c "cd /home/tommy/Downloads/Distributed-Scalable-Data-Architecture/rds && python3 rds.py && echo 'rds.py has completed'; exec bash"
+    gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/rds && python3 rds.py && echo 'rds.py has completed'; exec bash"
 
     # Open new GNOME terminal tab and run wds.py
-    gnome-terminal --tab -- bash -c "cd /home/tommy/Downloads/Distributed-Scalable-Data-Architecture/wds && python3 wds.py && echo 'wds.py has completed'; exec bash"
+    gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/wds && python3 wds.py && echo 'wds.py has completed'; exec bash"
 else
     echo "mds.py did not start successfully after $max_retries attempts. Exiting script."
     exit 1
@@ -39,20 +39,14 @@ fi
 wait
 
 # Open new GNOME terminal tab and run read-service.py
-gnome-terminal --tab -- bash -c "cd /home/tommy/Downloads/Distributed-Scalable-Data-Architecture/read-service && python3 read-service.py && echo 'read-service.py has completed'; exec bash"
+gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/read-service && python3 read-service.py && echo 'read-service.py has completed'; exec bash"
 
 # Wait for read-service.py to fully complete
 wait
 
 # Open new GNOME terminal tab and run write-service.py
-gnome-terminal --tab -- bash -c "cd /home/tommy/Downloads/Distributed-Scalable-Data-Architecture/write-service && python3 write-service.py && echo 'write-service.py has completed'; exec bash"
+gnome-terminal --tab -- bash -c "cd /path/to/Distributed-Scalable-Data-Architecture/write-service && python3 write-service.py && echo 'write-service.py has completed'; exec bash"
 
-# Open new GNOME terminal tab and run npm start
-gnome-terminal --tab -- bash -c "cd /home/tommy/Desktop/ohali-db/react-frontend && npm start  && echo 'npm has started'; exec bash"
-
-gnome-terminal --tab -- bash -c "cd /home/tommy/Desktop/ohali-db/react-frontend/src && node readservice.js  && echo 'npm has started'; exec bash"
-
-gnome-terminal --tab -- bash -c "cd /home/tommy/Desktop/ohali-db/react-frontend/src && node writeservice.js  && echo 'npm has started'; exec bash"
 
 # Wait for write-service.py to fully complete
 wait
