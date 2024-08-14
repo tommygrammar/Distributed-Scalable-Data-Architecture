@@ -2,16 +2,24 @@ import redis
 import json
 import pika
 import socketio
-
+import threading
+import time
 
 class RedisService:
-    def __init__(self, mds_host='localhost', mds_port=5006):
+    def __init__(self, mds_host='localhost', mds_port=5006, refresh_interval=60):
         self.sio = socketio.Client()
         self.redis_address = self.get_redis_address(mds_host, mds_port)
         if not self.redis_address:
             raise Exception("Failed to retrieve Redis address from MDS")
-        self.redis_client = redis.Redis(host=self.redis_address['host'], port=self.redis_address['port'], db=0)
+        self.redis_client = redis.Redis(host=self.redis_address['host'], port=self.redis_address['port'], db=self.redis_address['db'])
         self.rabbitmq_host = 'localhost'
+        self.mds_host = mds_host
+        self.mds_port = mds_port
+        self.refresh_interval = refresh_interval
+
+        # Start a background thread to periodically refresh the Redis address
+        self.refresh_thread = threading.Thread(target=self.periodic_redis_refresh, daemon=True)
+        self.refresh_thread.start()
 
     def get_redis_address(self, mds_host, mds_port):
         # Connect to MDS
@@ -26,15 +34,28 @@ class RedisService:
             redis_address = data
 
         # Emit request for Redis address
-        self.sio.emit('request_redis_address', {'type': 'backup'})
-        
+        self.sio.emit('request_redis_address', {'type': 'main'})
+
         # Allow some time for the response
         self.sio.sleep(1)
-        
+
         # Disconnect after receiving the address
         self.sio.disconnect()
 
         return redis_address
+
+    def refresh_redis_client(self):
+        # Get the latest Redis address
+        new_redis_address = self.get_redis_address(self.mds_host, self.mds_port)
+        if new_redis_address and new_redis_address != self.redis_address:
+            print(f"Updating Redis address from {self.redis_address} to {new_redis_address}")
+            self.redis_address = new_redis_address
+            self.redis_client = redis.Redis(host=self.redis_address['host'], port=self.redis_address['port'], db=self.redis_address['db'])
+
+    def periodic_redis_refresh(self):
+        while True:
+            self.refresh_redis_client()
+            time.sleep(self.refresh_interval)
 
     def get_data(self, collection=None, document=None, field=None):
         result = {}
@@ -79,7 +100,7 @@ class RedisService:
                     result[collection_name][doc_name] = fields
             else:
                 print(f"Skipping key {key_str} of type {key_type}")
-                
+
         return result
 
     def on_request(self, ch, method, props, body):
@@ -97,7 +118,7 @@ class RedisService:
             body=json.dumps(response_data)
         )
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        
+
     def start_service(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.rabbitmq_host))
         channel = connection.channel()
